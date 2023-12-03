@@ -25,5 +25,6 @@
     <Text Include="Employee.txt" />
     <Text Include="Director.txt" />
     <Text Include="Admin.txt" />
+    <Text Include="Complaints.txt" />
   </ItemGroup>
 </Project>

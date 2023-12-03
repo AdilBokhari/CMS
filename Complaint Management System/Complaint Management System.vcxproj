@@ -131,6 +131,7 @@
   </ItemGroup>
   <ItemGroup>
     <Text Include="Admin.txt" />
+    <Text Include="Complaints.txt" />
     <Text Include="Director.txt" />
     <Text Include="Employee.txt" />
     <Text Include="Managers.txt" />

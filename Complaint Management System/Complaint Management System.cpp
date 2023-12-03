@@ -3,7 +3,17 @@
 #include <sstream>
 #include <string>
 #include <vector>
+#include <ctime>
 using namespace std;
+
+string getCurrentDate() {
+    time_t currentTime = std::time(nullptr);
+    tm localTime;
+    localtime_s(&localTime, &currentTime);
+    char buffer[80];
+    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y", &localTime);
+    return buffer;
+}
 
 class Person
 {
@@ -49,9 +59,16 @@ public:
     string Date;
     string Status;
     string Description;
+    string Dept;
     Teacher* t;
     Manager* m;
     vector<Employee*>emps;
+    Complaint() : t(nullptr), m(nullptr) {}
+    ~Complaint()
+    {
+        delete t;
+        delete m;
+    }
 };
 
 class CMS
@@ -61,6 +78,7 @@ public:
     {
         loadTeacherData();
         loadManagerData();
+        loadComplaintData();
     }
     vector<Teacher>T;
     vector<Manager>M;
@@ -100,51 +118,169 @@ public:
         }
         file.close();
     }
+    void loadComplaintData()
+    {
+        ifstream file("Complaints.txt");
+        if (!file.is_open())
+        {
+            cerr << "Error opening Complaints.txt" << endl;
+            return;
+        }
+        string line;
+        while (getline(file, line))
+        {
+            Complaint complaint;
+            istringstream iss(line);
+            getline(iss, complaint.Date, '&');
+            getline(iss, complaint.Status, '&');
+            getline(iss, complaint.Description, '&');
+            getline(iss, complaint.Dept, '&');
+            complaint.t = new Teacher("Teacher");
+            complaint.m = new Manager("Manager", complaint.Dept);
+            getline(iss, complaint.t->name, '&');
+            getline(iss, complaint.m->name, '&');
+            C.push_back(complaint);
+        }
+        file.close();
+    }
+    void AddComplaint(Teacher* teacher)
+    {
+        cout << "Choose Department to complaint to: \n" << endl;
+        cout << "1. IT\n";
+        cout << "2. Accounts\n";
+        cout << "3. Admin\n";
+
+        int choice;
+        cin >> choice;
+
+        if (choice >= 1 && choice <= 3)
+        {
+            cout << "Enter Complaint: ";
+            string description;
+            cin.ignore();
+            getline(cin, description);
+            string date = getCurrentDate();
+            Complaint complaint;
+            complaint.Date = date;
+            complaint.Status = "New";
+            complaint.Description = description;
+            complaint.t = teacher;
+            switch (choice)
+            {
+            case 1:
+                complaint.Dept = "IT";
+                break;
+            case 2:
+                complaint.Dept = "Accounts";
+                break;
+            case 3:
+                complaint.Dept = "Admin";
+                break;
+            }
+            for (Manager& manager : M)
+            {
+                if (manager.Department == complaint.Dept)
+                {
+                    complaint.m = &manager;
+                    break;
+                }
+            }
+            C.push_back(complaint);
+            WriteComplaintToFile(complaint);
+            cout << "Complaint added successfully!" << endl;
+        }
+    }
+    void WriteComplaintToFile(Complaint& complaint)
+    {
+        ofstream file("Complaints.txt", ios::app);
+        if (file.is_open())
+        {
+            file << complaint.Date << "&";
+            file << complaint.Status << "&";
+            file << complaint.Description << "&";
+            file << complaint.Dept << "&";
+            file << complaint.t->name << "&";
+            file << complaint.m->name << "&";
+            file << endl;
+            file.close();
+        }
+        else
+        {
+            cerr << "Error opening Complaints.txt for writing." << endl;
+        }
+    }
+    void ViewComplaints(Teacher* teacher)
+    {
+        cout << "Complaints for Teacher: " << teacher->name << endl;
+        for (Complaint& complaint : C)
+        {
+            if (complaint.t->name == teacher->name)
+            {
+                cout << "------------------------" << endl;
+                cout << "Date: " << complaint.Date << endl;
+                cout << "Status: " << complaint.Status << endl;
+                cout << "Description: " << complaint.Description << endl;
+                cout << "Department: " << complaint.Dept << endl;
+                cout << "------------------------" << endl;
+            }
+        }
+    }
 };
 
-void TeacherInterface(const CMS& cms)
+void TeacherInterface(CMS& cms)
 {
     cout << "Enter name: ";
     string name;
-    getchar();
+    cin.ignore();
     getline(cin, name);
     bool found = false;
-    for (const Teacher& teacher : cms.T)
+    int opt;
+    for (Teacher& teacher : cms.T)
     {
         if (teacher.name == name)
         {
             found = true;
+            cout << "Choose Option: " << endl;
+            cout << "1. Register Complaint.\n";
+            cout << "2. View Complaints.\n";
+            cout << "3. Close or Open Resolved Complaints.\n";
+            cin >> opt;
+            if (opt == 1)
+            {
+                cms.AddComplaint(&teacher);
+            }
+            if (opt == 2)
+            {
+                cms.ViewComplaints(&teacher);
+            }
             break;
         }
     }
-    if (found)
-    {
-        cout << "Complaint to Department" << endl;
-    }
-    else
+    if (!found)
     {
         cout << "Name does not exist in the System." << endl;
     }
 }
 
-void ManagerInterface(const CMS& cms)
+void ManagerInterface(CMS& cms)
 {
     cout << "Enter name: ";
     string name;
-    getchar();
+    cin.ignore();
     getline(cin, name);
     bool found = false;
-    for (const Manager& manager : cms.M)
+    for (Manager& manager : cms.M)
     {
         if (manager.name == name)
         {
             found = true;
+            cout << "Welcome Manager of " << manager.Department << endl;
             break;
         }
     }
     if (found)
     {
-        cout << "Welcome" << endl;
+
     }
     else
     {
@@ -174,15 +310,15 @@ int main()
     }
     else if (option == 3)
     {
-        
+
     }
     else if (option == 4)
     {
-        
+
     }
     else if (option == 5)
     {
-        
+
     }
     return 0;
 }
