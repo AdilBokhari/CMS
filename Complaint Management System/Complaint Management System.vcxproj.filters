@@ -19,4 +19,11 @@
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Teachers.txt" />
+    <Text Include="Managers.txt" />
+    <Text Include="Employee.txt" />
+    <Text Include="Director.txt" />
+    <Text Include="Admin.txt" />
+  </ItemGroup>
 </Project>

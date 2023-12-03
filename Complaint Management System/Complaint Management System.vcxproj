@@ -129,6 +129,13 @@
   <ItemGroup>
     <ClCompile Include="Complaint Management System.cpp" />
   </ItemGroup>
+  <ItemGroup>
+    <Text Include="Admin.txt" />
+    <Text Include="Director.txt" />
+    <Text Include="Employee.txt" />
+    <Text Include="Managers.txt" />
+    <Text Include="Teachers.txt" />
+  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>
