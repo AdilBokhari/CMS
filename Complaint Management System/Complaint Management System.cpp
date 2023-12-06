@@ -6,13 +6,23 @@
 #include <ctime>
 using namespace std;
 
-string getCurrentDate() {
-    time_t currentTime = std::time(nullptr);
+string getCurrentDate()
+{
+    time_t currentTime = time(nullptr);
     tm localTime;
     localtime_s(&localTime, &currentTime);
     char buffer[80];
-    std::strftime(buffer, sizeof(buffer), "%d-%m-%Y", &localTime);
+    strftime(buffer, sizeof(buffer), "%d-%m-%Y", &localTime);
     return buffer;
+}
+
+void getDate(string Date, int& d, int& m, int& y)
+{
+    size_t firstDash = Date.find('-');
+    size_t secondDash = Date.find('-', firstDash + 1);
+    d = stoi(Date.substr(0, firstDash));
+    m = stoi(Date.substr(firstDash + 1, secondDash - firstDash - 1));
+    y = stoi(Date.substr(secondDash + 1));
 }
 
 class Person
@@ -92,7 +102,8 @@ public:
             return;
         }
         int id;
-        while (file >> id) {
+        while (file >> id)
+        {
             T.push_back(Teacher(id));
         }
         file.close();
@@ -107,7 +118,8 @@ public:
         }
         string dept;
         int id;
-        while (file >> dept >> id) {
+        while (file >> dept >> id)
+        {
             M.push_back(Manager(id, dept));
         }
         file.close();
@@ -151,7 +163,8 @@ public:
         }
         string dept;
         int id;
-        while (file >> dept >> id) {
+        while (file >> dept >> id)
+        {
             E.push_back(Employee(id, dept));
         }
         file.close();
@@ -203,6 +216,11 @@ public:
             WriteComplaintToFile(complaint);
             cout << "Complaint added successfully!" << endl;
         }
+        else
+        {
+            cout << "Invalid Input. \n";
+            return;
+        }
     }
     void WriteComplaintToFile(Complaint& complaint)
     {
@@ -229,7 +247,7 @@ public:
     {
         cout << "Complaints:\n";
         int printedComplaints = 0;
-        for (const Complaint& complaint : C)
+        for (Complaint& complaint : C)
         {
             printedComplaints++;
             cout << "Date: " << complaint.ComplaintDate << endl;
@@ -261,7 +279,7 @@ public:
     {
         cout << "Complaints:\n";
         int printedComplaints = 0;
-        for (const Complaint& complaint : C)
+        for (Complaint& complaint : C)
         {
             if (complaint.t_id == teacher->ID)
             {
@@ -297,7 +315,7 @@ public:
         cout << "Complaints:\n";
         int printedComplaints = 0;
 
-        for (const Complaint& complaint : C)
+        for (Complaint& complaint : C)
         {
             if (complaint.Dept == dept)
             {
@@ -336,7 +354,26 @@ public:
         {
             if (employee.Department==dept)
             {
-                cout << "ID: " << employee.ID << endl;
+                ifstream nameFile("Names.txt");
+                if (!nameFile.is_open())
+                {
+                    cerr << "Error opening Names.txt" << endl;
+                    return;
+                }
+                cout << "ID: " << employee.ID;
+                while (!nameFile.eof())
+                {
+                    int id;
+                    string name;
+                    nameFile >> id >> name;
+
+                    if (id == employee.ID)
+                    {
+                        cout << "   Name: " << name << endl;
+                        break;
+                    }
+                }
+                nameFile.close();
             }
         }
     }
@@ -353,7 +390,7 @@ public:
         bool exists = false;
         for (Complaint& complaint : C)
         {
-            if (complaint.c_id == id)
+            if (complaint.c_id == id && complaint.Dept == dept)
             {
                 exists = true;
                 break;
@@ -407,7 +444,7 @@ public:
                 ofstream file("Complaints.txt");
                 if (file.is_open())
                 {
-                    for (const Complaint& c : C)
+                    for (Complaint& c : C)
                     {
                         file << c.ComplaintDate << "&";
                         file << c.AssignedDate << "&";
@@ -436,7 +473,7 @@ public:
     int viewAllemployeeComplaints(int id)
     {
         int printedComplaints = 0;
-        for (const Complaint& complaint : C)
+        for (Complaint& complaint : C)
         {
             bool employeeFound = false;
             for (int empId : complaint.emp_id)
@@ -492,21 +529,31 @@ public:
         {
             if (complaint.c_id == cid)
             {
-                exists = true;
-                complaint.Status = "Resolved";
+                bool employeeFound = false;
+                for (int empId : complaint.emp_id)
+                {
+                    if (empId == id)
+                    {
+                        employeeFound = true;
+                        break;
+                    }
+                }
+                if (employeeFound)
+                {
+                    exists = true;
+                    complaint.Status = "Resolved";
+                }
             }
         }
-
         if (!exists)
         {
-            cout << "Invalid complaint ID.\n";
+            cout << "Invalid complaint ID or employee ID.\n";
             return;
         }
-
         ofstream file("Complaints.txt");
         if (file.is_open())
         {
-            for (const Complaint& c : C)
+            for (Complaint& c : C)
             {
                 file << c.ComplaintDate << "&";
                 file << c.AssignedDate << "&";
@@ -532,8 +579,8 @@ public:
     int printResolvedComplaints(string dept)
     {
         cout << "Complaints:\n";
-        int printedComplaints = 0; // Track the number of printed complaints
-        for (const Complaint& complaint : C)
+        int printedComplaints = 0;
+        for (Complaint& complaint : C)
         {
             if (complaint.Dept == dept && complaint.Status == "Resolved")
             {
@@ -578,7 +625,7 @@ public:
         bool exists = false;
         for (Complaint& complaint : C)
         {
-            if (complaint.c_id == id)
+            if (complaint.c_id == id && complaint.Dept == dept)
             {
                 int opt;
                 cout << "Press 1 to close, 2 to reassign: ";
@@ -600,7 +647,7 @@ public:
                 ofstream file("Complaints.txt");
                 if (file.is_open())
                 {
-                    for (const Complaint& c : C)
+                    for (Complaint& c : C)
                     {
                         file << c.ComplaintDate << "&";
                         file << c.AssignedDate << "&";
@@ -635,7 +682,7 @@ public:
     {
         cout << "Closed Complaints:\n";
         int printedComplaints = 0;
-        for (const Complaint& complaint : C)
+        for (Complaint& complaint : C)
         {
             if (complaint.t_id == id && complaint.Status == "Closed")
             {
@@ -680,14 +727,14 @@ public:
         bool exists = false;
         for (Complaint& complaint : C)
         {
-            if (complaint.c_id == cid)
+            if (complaint.c_id == cid && complaint.t_id == teacher->ID)
             {
                 complaint.Status = "Assigned";
                 exists = true;
                 ofstream file("Complaints.txt");
                 if (file.is_open())
                 {
-                    for (const Complaint& c : C)
+                    for (Complaint& c : C)
                     {
                         file << c.ComplaintDate << "&";
                         file << c.AssignedDate << "&";
@@ -717,6 +764,513 @@ public:
             cout << "Invalid complaint ID.\n";
             return;
         }
+    }
+    int complaintInATimeLine(int startMonth, int startYear, int endMonth, int endYear)
+    {
+        cout << "Complaints:\n";
+        int printedComplaints = 0;
+        for (Complaint& complaint : C)
+        {
+            int d, m, y;
+            getDate(complaint.ComplaintDate,d,m,y);
+            if ((y <= endYear && y >= startYear) && (startMonth <= m && m <= endMonth))
+            {
+                printedComplaints++;
+                cout << "Date: " << complaint.ComplaintDate << endl;
+                cout << "Status: " << complaint.Status << endl;
+                cout << "Description: " << complaint.Description << endl;
+                cout << "Department: " << complaint.Dept << endl;
+                cout << "Teacher ID: " << complaint.t_id << endl;
+                cout << "Manager ID: " << complaint.m_id << endl;
+                cout << "Assigned Date: " << complaint.AssignedDate << endl;
+                if (!complaint.emp_id.empty())
+                {
+                    cout << "Employee IDs: ";
+                    for (int empId : complaint.emp_id)
+                    {
+                        cout << empId << " ";
+                    }
+                    cout << endl;
+                }
+                cout << "\n---------------------------------------\n";
+            }
+        }
+        if (printedComplaints == 0)
+        {
+            cout << "No complaints found.\n";
+            return -1;
+        }
+        return printedComplaints;
+    }
+    void printTeachers()
+    {
+        for (Teacher& teacher : T)
+        {
+            ifstream nameFile("Names.txt");
+            if (!nameFile.is_open())
+            {
+                cerr << "Error opening Names.txt" << endl;
+                return;
+            }
+            cout << "ID: " << teacher.ID;
+            while (!nameFile.eof())
+            {
+                int id;
+                string name;
+                nameFile >> id >> name;
+
+                if (id == teacher.ID)
+                {
+                    cout << "   Name: " << name << endl;
+                    break;
+                }
+            }
+        }
+    }
+    void DeleteTeacher()
+    {
+        cout << "Choose ID to delete: " << endl;
+        printTeachers();
+        int tid;
+        cout << "Enter: ";
+        cin >> tid;
+        bool exists = false;
+        for (Teacher& teacher : T)
+        {
+            if (teacher.ID == tid)
+            {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists)
+        {
+            cout << "Invalid Teacher ID.\n";
+            return;
+        }
+        ifstream inputFile("Teachers.txt");
+        if (!inputFile.is_open())
+        {
+            cerr << "Error opening Teachers.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines;
+        string line;
+        while (getline(inputFile, line))
+        {
+            lines.push_back(line);
+        }
+        inputFile.close();
+        ofstream outputFile("Teachers.txt");
+        if (!outputFile.is_open())
+        {
+            cerr << "Error opening Teachers.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine : lines)
+        {
+            istringstream iss(currentLine);
+            int currentNumber;
+            iss >> currentNumber;
+            if (currentNumber != tid) {
+                outputFile << currentLine << endl;
+            }
+        }
+        outputFile.close();
+        ifstream inputFile2("Names.txt");
+        if (!inputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines2;
+        string line2;
+        while (getline(inputFile2, line2))
+        {
+            lines2.push_back(line2);
+        }
+        inputFile2.close();
+        ofstream outputFile2("Names.txt");
+        if (!outputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine2 : lines2)
+        {
+            istringstream iss(currentLine2);
+            int currentNumber;
+            iss >> currentNumber;
+            if (currentNumber != tid) {
+                outputFile2 << currentLine2 << endl;
+            }
+        }
+        outputFile2.close();
+        cout << "Teacher with ID " << tid << " deleted ." << endl;
+        resetVectors();
+    }
+    bool checkIDExists(int tid)
+    {
+        ifstream file("Names.txt");
+        if (!file.is_open())
+        {
+            cerr << "Error opening the file 'Names.txt'" << endl;
+            return false;
+        }
+        string line;
+        while (getline(file, line))
+        {
+            istringstream iss(line);
+            int id;
+            string name;
+            if (iss >> id >> name)
+            {
+                if (id == tid)
+                {
+                    file.close();
+                    return true;
+                }
+            }
+            else 
+            {
+                cerr << "Error reading data from the file 'Names.txt'" << endl;
+                file.close();
+                return false;
+            }
+        }
+        file.close();
+        return false;
+    }
+    void AddTeacher()
+    {
+        cout << "Enter an ID: " << endl;
+        int tid;
+        cin >> tid;
+        bool check = checkIDExists(tid);
+        if (check)
+        {
+            cout << "This ID is already assigned." << endl;
+            return;
+        }
+        cout << "Enter Name: ";
+        string name;
+        cin.ignore();
+        getline(cin,name);
+        ofstream file("Names.txt", ios::app);
+        if (!file.is_open())
+        {
+            cerr << "Error opening the file 'Names.txt'" << endl;
+            return;
+        }
+        file << tid << " " << name << endl;
+        file.close();
+        ofstream file2("Teachers.txt", ios::app);
+        if (!file2.is_open())
+        {
+            cerr << "Error opening the file 'Teachers.txt'" << endl;
+            return;
+        }
+        file2 << tid << endl;
+        file2.close();
+        resetVectors();
+        cout << "Teacher Added." << endl;
+    }
+    void resetVectors()
+    {
+        T.clear();
+        M.clear();
+        E.clear();
+        C.clear();
+        countComplaints = 1;
+        loadTeacherData();
+        loadManagerData();
+        loadComplaintData();
+        loadEmployeeData();
+    }
+    void DeleteEmployee()
+    {
+        cout << "Choose ID to delete: " << endl;
+        cout << "IT Dept: " << endl;
+        viewDeptEmps("IT");
+        cout << endl << "Account Dept: " << endl;
+        viewDeptEmps("Account");
+        cout << endl << "Admin Dept: " << endl;
+        viewDeptEmps("Admin");
+        int eid;
+        cout << "Enter: ";
+        cin >> eid;
+        bool exists = false;
+        for (Employee& employee : E)
+        {
+            if (employee.ID == eid)
+            {
+                exists = true;
+                break;
+            }
+        }
+        if (!exists)
+        {
+            cout << "Invalid Employee ID.\n";
+            return;
+        }
+        ifstream inputFile("Employee.txt");
+        if (!inputFile.is_open())
+        {
+            cerr << "Error opening Employee.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines;
+        string line;
+        while (getline(inputFile, line))
+        {
+            lines.push_back(line);
+        }
+        inputFile.close();
+        ofstream outputFile("Employee.txt");
+        if (!outputFile.is_open())
+        {
+            cerr << "Error opening Employee.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine : lines) 
+        {
+            istringstream iss(currentLine);
+            string currentName;
+            int currentNumber;
+            iss >> currentName >> currentNumber;
+            if (currentNumber != eid) {
+                outputFile << currentName << " " << currentNumber << endl;
+            }
+        }
+        outputFile.close();
+        ifstream inputFile2("Names.txt");
+        if (!inputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines2;
+        string line2;
+        while (getline(inputFile2, line2))
+        {
+            lines2.push_back(line2);
+        }
+        inputFile2.close();
+        ofstream outputFile2("Names.txt");
+        if (!outputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine2 : lines2)
+        {
+            istringstream iss(currentLine2);
+            int currentNumber;
+            iss >> currentNumber;
+            if (currentNumber != eid) {
+                outputFile2 << currentLine2 << endl;
+            }
+        }
+        outputFile2.close();
+        cout << "Employee with ID " << eid << " deleted ." << endl;
+        resetVectors();
+    }
+    void AddEmployee()
+    {
+        cout << "Enter an ID: " << endl;
+        int id;
+        cin >> id;
+        bool check = checkIDExists(id);
+        if (check)
+        {
+            cout << "This ID is already assigned." << endl;
+            return;
+        }
+        cout << "Enter Name: ";
+        string name;
+        cin.ignore();
+        getline(cin, name);
+        cout << "Choose Department: " << endl;
+        cout << "1. IT\n";
+        cout << "2. Accounts\n";
+        cout << "3. Admin\n";
+        int choice;
+        cin >> choice;
+        string Dept;
+        if (choice >= 1 && choice <= 3)
+        {
+            switch (choice)
+            {
+            case 1:
+                Dept = "IT";
+                break;
+            case 2:
+                Dept = "Account";
+                break;
+            case 3:
+                Dept = "Admin";
+                break;
+            }
+        }
+        else
+        {
+            cout << "Invalid Input." << endl;
+            return;
+        }
+        ofstream file("Names.txt", ios::app);
+        if (!file.is_open())
+        {
+            cerr << "Error opening the file Names.txt" << endl;
+            return;
+        }
+        file << id << " " << name << endl;
+        file.close();
+        ofstream file2("Employee.txt", ios::app);
+        if (!file2.is_open())
+        {
+            cerr << "Error opening the file Employee.txt" << endl;
+            return;
+        }
+        file2 << Dept << " " << id << endl;
+        resetVectors();
+        cout << "Employee Added." << endl;
+    }
+    void deleteManager(string dept)
+    {
+        int delID;
+        for (Manager& manager : M)
+        {
+            if (manager.Department == dept)
+            {
+                delID = manager.ID;
+            }
+        }
+        ifstream inputFile("Managers.txt");
+        if (!inputFile.is_open())
+        {
+            cerr << "Error opening Managers.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines;
+        string line;
+        while (getline(inputFile, line))
+        {
+            lines.push_back(line);
+        }
+        inputFile.close();
+        ofstream outputFile("Managers.txt");
+        if (!outputFile.is_open())
+        {
+            cerr << "Error opening Managers.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine : lines)
+        {
+            istringstream iss(currentLine);
+            string currentName;
+            int currentNumber;
+            iss >> currentName >> currentNumber;
+            if (currentNumber != delID)
+            {
+                outputFile << currentName << " " << currentNumber << endl;
+            }
+        }
+        outputFile.close();
+        ifstream inputFile2("Names.txt");
+        if (!inputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for reading." << endl;
+            return;
+        }
+        vector<string> lines2;
+        string line2;
+        while (getline(inputFile2, line2))
+        {
+            lines2.push_back(line2);
+        }
+        inputFile2.close();
+        ofstream outputFile2("Names.txt");
+        if (!outputFile2.is_open())
+        {
+            cerr << "Error opening Names.txt for writing." << endl;
+            return;
+        }
+        for (auto& currentLine2 : lines2)
+        {
+            istringstream iss(currentLine2);
+            int currentNumber;
+            iss >> currentNumber;
+            if (currentNumber != delID) 
+            {
+                outputFile2 << currentLine2 << endl;
+            }
+        }
+        outputFile2.close();
+    }
+    void AddManager(int id, string Dept, string name)
+    {
+        ofstream file("Names.txt", ios::app);
+        if (!file.is_open())
+        {
+            cerr << "Error opening the file Names.txt" << endl;
+            return;
+        }
+        file << id << " " << name << endl;
+        file.close();
+        ofstream file2("Managers.txt", ios::app);
+        if (!file2.is_open())
+        {
+            cerr << "Error opening the file Managers.txt" << endl;
+            return;
+        }
+        file2 << Dept << " " << id << endl;
+        resetVectors();
+        cout << "Manager Updated." << endl;
+    }
+    void ReplaceManager()
+    {
+        cout << "Choose Department to assign a new Manager: " << endl;
+        cout << "1. IT\n";
+        cout << "2. Accounts\n";
+        cout << "3. Admin\n";
+        int choice;
+        cin >> choice;
+        string Dept;
+        if (choice >= 1 && choice <= 3)
+        {
+            switch (choice)
+            {
+            case 1:
+                Dept = "IT";
+                break;
+            case 2:
+                Dept = "Account";
+                break;
+            case 3:
+                Dept = "Admin";
+                break;
+            }
+        }
+        else
+        {
+            cout << "Invalid input.\n";
+            return;
+        }
+        cout << "Enter an new ID: " << endl;
+        int id;
+        cin >> id;
+        bool check = checkIDExists(id);
+        if (check)
+        {
+            cout << "This ID is already assigned." << endl;
+            return;
+        }
+        cout << "Enter Name: ";
+        string name;
+        cin.ignore();
+        getline(cin, name);
+        deleteManager(Dept);
+        AddManager(id, Dept, name);
     }
 };
 
@@ -777,10 +1331,10 @@ void ManagerInterface(CMS& cms)
     {
         if (manager.ID == id)
         {
+            cout << "Welcome Manager of " << manager.Department << endl;
             do
             {
                 found = true;
-                cout << "Welcome Manager of " << manager.Department << endl;
                 cout << "Choose Option: " << endl;
                 cout << "1. View All Complaints of Your Department.\n";
                 cout << "2. Assign new complaints to employees.\n";
@@ -854,6 +1408,166 @@ void EmployeeInterface(CMS& cms)
     }
 }
 
+void DirectorInterface(CMS& cms)
+{
+    cout << "Enter Username: ";
+    string usern;
+    cin.ignore();
+    getline(cin, usern);
+    cout << "Enter Password: ";
+    string pass;
+    getline(cin, pass);
+    ifstream directorFile("Director.txt");
+    if (!directorFile.is_open())
+    {
+        cerr << "Error opening Director.txt" << endl;
+        return;
+    }
+    string user;
+    string password;
+    getline(directorFile, user);
+    getline(directorFile, password);
+    directorFile.close();
+    if (usern == user && pass == password)
+    {
+        cout << "Login successful. Welcome, Director!" << endl;
+        do
+        {
+            int opt;
+            cout << "Choose Option: " << endl;
+            cout << "1. View All Complaints.\n";
+            cout << "2. View Complaints of any department.\n";
+            cout << "3. View Complaints in a specific timeline.\n";
+            cout << "4. Exit.\n";
+            cin >> opt;
+            if (opt == 1)
+            {
+                int x = cms.viewAllComplaints();
+            }
+            if (opt == 2)
+            {
+                cout << "Choose Department to view complaints of: " << endl;
+                cout << "1. IT\n";
+                cout << "2. Accounts\n";
+                cout << "3. Admin\n";
+                int choice;
+                cin >> choice;
+                string Dept;
+                if (choice >= 1 && choice <= 3)
+                {
+                    switch (choice)
+                    {
+                    case 1:
+                        Dept = "IT";
+                        break;
+                    case 2:
+                        Dept = "Account";
+                        break;
+                    case 3:
+                        Dept = "Admin";
+                        break;
+                    }
+                    int x = cms.viewAllDepartmentComplaints(Dept);
+                }
+                else
+                {
+                    cout << "Invalid Input.\n";
+                    return;
+                }
+            }
+            if (opt == 3)
+            {
+                int startMonth, startYear, endMonth, endYear;
+                cout << "Enter start Month: ";
+                cin >> startMonth;
+                cout << "Enter start Year: ";
+                cin >> startYear;
+                cout << "Enter end Month: ";
+                cin >> endMonth;
+                cout << "Enter end Year: ";
+                cin >> endYear;
+                int x = cms.complaintInATimeLine(startMonth, startYear, endMonth, endYear);
+            }
+            if (opt == 4)
+            {
+                break;
+            }
+
+        } while (true);
+    }
+    else
+    {
+        cout << "Incorrect username or password." << endl;
+    }
+}
+
+void AdminInterface(CMS& cms)
+{
+    cout << "Enter Username: ";
+    string usern;
+    cin.ignore();
+    getline(cin, usern);
+    cout << "Enter Password: ";
+    string pass;
+    getline(cin, pass);
+    ifstream adminFile("Admin.txt");
+    if (!adminFile.is_open())
+    {
+        cerr << "Error opening Admin.txt" << endl;
+        return;
+    }
+    string user;
+    string password;
+    getline(adminFile, user);
+    getline(adminFile, password);
+    adminFile.close();
+    if (usern == user && pass == password)
+    {
+        cout << "Login successful. Welcome, Admin!" << endl;
+        do
+        {
+            int opt;
+            cout << "Choose Option: " << endl;
+            cout << "1. Delete a Teacher.\n";
+            cout << "2. Add a Teacher.\n";
+            cout << "3. Delete a Employee.\n";
+            cout << "4. Add a Employee.\n";
+            cout << "5. Replace a manager.\n";
+            cout << "6. Exit.\n";
+            cin >> opt;
+            if (opt == 1)
+            {
+                cms.DeleteTeacher();
+            }
+            if (opt == 2)
+            {
+                cms.AddTeacher();
+            }
+            if (opt == 3)
+            {
+                cms.DeleteEmployee();
+            }
+            if (opt == 4)
+            {
+                cms.AddEmployee();
+            }
+            if (opt == 5)
+            {
+                cms.ReplaceManager();
+            }
+            if (opt == 6)
+            {
+                break;
+            }
+
+        } while (true);
+    }
+    else
+    {
+        cout << "Incorrect username or password." << endl;
+    }
+}
+
 int main()
 {
     CMS cms;
@@ -866,28 +1580,34 @@ int main()
         cout << "3. Employee\n";
         cout << "4. Director\n";
         cout << "5. Administrator\n";
-        cout << "6. Exit";
+        cout << "6. Exit\n";
+        cout << "Enter: ";
         int option;
         cin >> option;
         if (option == 1)
         {
+            system("cls");
             TeacherInterface(cms);
         }
         else if (option == 2)
         {
+            system("cls");
             ManagerInterface(cms);
         }
         else if (option == 3)
         {
+            system("cls");
             EmployeeInterface(cms);
         }
         else if (option == 4)
         {
-
+            system("cls");
+            DirectorInterface(cms);
         }
         else if (option == 5)
         {
-
+            system("cls");
+            AdminInterface(cms);
         }
         else if (option == 6)
         {
